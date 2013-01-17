@@ -18,42 +18,11 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-//import javax.swing.JMenuItem;
-//import java.util.List;
 
-public class BurpExtender implements IBurpExtender, IMessageEditorTabFactory { //, IContextMenuFactory {
+public class BurpExtender implements IBurpExtender, IMessageEditorTabFactory {
 
-    public static URLClassLoader classLoader; // will be used in MyObjectInputStream
     private IBurpExtenderCallbacks callbacks;
     private IExtensionHelpers helpers;
-    public static final String LIB_DIR = "libs/";
-    static XStream xstream = new XStream(new DomDriver());
-    private PrintStream _stdout;
-    private PrintStream _stderr;
-
-    public void JarLoader(String libDir) {
-        String file;
-        File dependencyDirectory = new File(libDir);
-        File[] files = dependencyDirectory.listFiles();
-        ArrayList<URL> urls = new ArrayList<>();
-
-        for (int i = 0; i < files.length; i++) {
-            if (files[i].getName().endsWith(".jar")) {
-                file = files[i].getAbsolutePath().toString();
-                try {
-                    _stdout.println("Loading: " + files[i].getName());
-                    urls.add(files[i].toURI().toURL());
-                } catch (MalformedURLException ex) {
-                    Logger.getLogger(BurpExtender.class.getName()).log(Level.SEVERE, null, ex);
-                    _stderr.println("!! Error loading: " + files[i].getName());
-                }
-            }
-
-            classLoader = new URLClassLoader(urls.toArray(new URL[urls.size()]), this.getClass().getClassLoader());
-            Thread.currentThread().setContextClassLoader(classLoader);
-        }
-
-    }
 
     //
     // implement IBurpExtender
@@ -63,19 +32,16 @@ public class BurpExtender implements IBurpExtender, IMessageEditorTabFactory { /
 
         // keep a reference to our callbacks object
         this.callbacks = callbacks;
-        this._stderr = new PrintStream(callbacks.getStderr());
-        this._stdout = new PrintStream(callbacks.getStdout());
+
         // obtain an extension helpers object
         helpers = callbacks.getHelpers();
 
         // set our extension name
-        callbacks.setExtensionName("Java deserializer by omerc.net");
-
-        JarLoader(LIB_DIR);
+        callbacks.setExtensionName("BurpJDSer-ng by omerc.net");
 
         // register ourselves as a message editor tab factory
         callbacks.registerMessageEditorTabFactory(this);
-        //callbacks.registerContextMenuFactory(this);
+        
     }
 
     //
@@ -88,36 +54,36 @@ public class BurpExtender implements IBurpExtender, IMessageEditorTabFactory { /
     }
 
     //
-    // implement IContextMenuFactory
-    //
-    /*@Override
-    public java.util.List<javax.swing.JMenuItem> createMenuItems(IContextMenuInvocation invocation) {
-        JMenuItem reloadJars = new JMenuItem("Exit");
-        List<JMenuItem> menuItems = new ArrayList<>();
-        menuItems.add(reloadJars);
-        return menuItems;
-    }*/
-
-    //
     // class implementing IMessageEditorTab
     //
     class SerializedJavaInputTab implements IMessageEditorTab {
 
+        private PrintStream _stdout;
+        private PrintStream _stderr;
         private boolean editable;
         private ITextEditor txtInput;
         private byte[] currentMessage;
         private byte[] serializeMagic = new byte[]{-84, -19};
         private Object obj;
         private byte[] crap;
+        private static final String LIB_DIR = "./libs/";
+        private XStream xstream = new XStream(new DomDriver());
+        public ClassLoader loader;
 
         public SerializedJavaInputTab(IMessageEditorController controller, boolean editable) {
+            this._stderr = new PrintStream(callbacks.getStderr());
+            this._stdout = new PrintStream(callbacks.getStdout());
+            
             this.editable = editable;
 
             // create an instance of Burp's text editor, to display our deserialized data
             txtInput = callbacks.createTextEditor();
             txtInput.setEditable(editable);
+            JarLoader(LIB_DIR);
         }
 
+        
+        
         //
         // implement IMessageEditorTab
         //act
@@ -158,12 +124,10 @@ public class BurpExtender implements IBurpExtender, IMessageEditorTabFactory { /
                     crap = Arrays.copyOfRange(content, msgBody, magicPos);
 
                     // deserialize the object
-                    Thread.currentThread().setContextClassLoader(classLoader);
-
                     ByteArrayInputStream bais = new ByteArrayInputStream(baSer);
 
                     // Use a custom OIS that uses our own ClassLoader
-                    is = new MyObjectInputStream(bais);
+                    is = new MyObjectInputStream(bais, this.loader);
                     obj = is.readObject();
                     String xml = xstream.toXML(obj);
 
@@ -223,7 +187,7 @@ public class BurpExtender implements IBurpExtender, IMessageEditorTabFactory { /
             return txtInput.getSelectedText();
         }
 
-        public String getStackTrace(Throwable t) {
+        private String getStackTrace(Throwable t) {
             StringWriter stringWritter = new StringWriter();
             PrintWriter printWritter = new PrintWriter(stringWritter, true);
             t.printStackTrace(printWritter);
@@ -231,6 +195,29 @@ public class BurpExtender implements IBurpExtender, IMessageEditorTabFactory { /
             stringWritter.flush();
 
             return stringWritter.toString();
+        }
+        
+        private void JarLoader(String libDir) {
+            String file;
+            File dependencyDirectory = new File(libDir);
+            File[] files = dependencyDirectory.listFiles();
+            ArrayList<URL> urls = new ArrayList<>();
+
+            for (int i = 0; i < files.length; i++) {
+                if (files[i].getName().endsWith(".jar")) {
+                    file = files[i].getAbsolutePath().toString();
+                    try {
+                        _stdout.println("Loading: " + files[i].getName());
+                        urls.add(files[i].toURI().toURL());
+                    } catch (MalformedURLException ex) {
+                        Logger.getLogger(BurpExtender.class.getName()).log(Level.SEVERE, null, ex);
+                        _stderr.println("!! Error loading: " + files[i].getName());
+                    }
+                }
+
+                this.loader = new URLClassLoader(urls.toArray(new URL[urls.size()]), this.getClass().getClassLoader());
+            }
+
         }
     }
 }
