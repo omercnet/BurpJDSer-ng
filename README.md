@@ -3,7 +3,7 @@
 
 A Burp Extender plugin, that will deserialized java objects and encode them in XML using the [Xtream](http://xstream.codehaus.org/) library.
 
-Based in part on https://github.com/khai-tran/BurpJDSer but written from scratch to work with the new Extender API introduced in Burp-1.5.01
+Based in part on [khai-tran](https://github.com/khai-tran/BurpJDSer)'s work but written from scratch to work with the new Extender API introduced in Burp-1.5.01
 
 ##Usage
 
