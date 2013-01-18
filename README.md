@@ -16,7 +16,7 @@ Few methods to locate the required jar files containing the classes we'll be des
 Finally, create a "libs/" directory next to your burp.jar and put all the jars in it.
 
 ###2) Start Burp plugin
-Simply load it in the Extender tab, the Output window will list all the loaded jars from ./libs/ 
+Download from [here](https://github.com/IOActive/BurpJDSer-ng/raw/master/dist/BurpJDSer-ng.jar) and simply load it in the Extender tab, the Output window will list all the loaded jars from ./libs/ 
 
 
 ###3) Inspect serialized Java traffic
