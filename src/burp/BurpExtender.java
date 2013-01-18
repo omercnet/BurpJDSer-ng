@@ -16,10 +16,12 @@ import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.swing.JMenuItem;
 
-public class BurpExtender implements IBurpExtender, IMessageEditorTabFactory {
+public class BurpExtender implements IBurpExtender, IMessageEditorTabFactory, IContextMenuFactory {
 
     private IBurpExtenderCallbacks callbacks;
     private IExtensionHelpers helpers;
@@ -62,6 +64,16 @@ public class BurpExtender implements IBurpExtender, IMessageEditorTabFactory {
     }
 
     //
+    // implement IContextMenuFactory
+    //
+    @Override
+    public List<JMenuItem> createMenuItems(IContextMenuInvocation invocation) {
+        List<JMenuItem> menu = new ArrayList<>();
+        menu.add(new JMenuItem("Exit"));
+        return menu;
+    }
+
+    //
     // class implementing IMessageEditorTab
     //
     class SerializedJavaInputTab implements IMessageEditorTab {
@@ -73,7 +85,6 @@ public class BurpExtender implements IBurpExtender, IMessageEditorTabFactory {
         private Object obj;
         private byte[] crap;
         private XStream xstream = new XStream(new DomDriver());
-        public ClassLoader loader;
 
         public SerializedJavaInputTab(IMessageEditorController controller, boolean editable) {
             
@@ -223,8 +234,12 @@ public class BurpExtender implements IBurpExtender, IMessageEditorTabFactory {
     
     public static ClassLoader getSharedClassLoader() {
         if(loader == null) {
-                loader = createURLClassLoader(LIB_DIR);
+                refreshSharedClassLoader();
         }
         return loader;
+    }
+    
+    public static void refreshSharedClassLoader() {
+        loader = createURLClassLoader(LIB_DIR);
     }
 }
