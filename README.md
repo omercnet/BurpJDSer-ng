@@ -25,6 +25,4 @@ Any changes made to the XML will serialize back once you switch to a different t
 
 **Please note that if you mess up the XML schema or edit an object in a funny way, the re-serialization will fail and the error will be displayed in the input tab**
 
-
-##TODO
-Create context menus to allow reloading jars instead of having to unload and re-load the entire plugin.
+In case you need to add more JARs, right click anywhere and select "BurpJDSer-ng: Reload JARs"
