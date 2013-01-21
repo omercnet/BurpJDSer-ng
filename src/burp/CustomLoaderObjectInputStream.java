@@ -13,12 +13,12 @@ import java.io.ObjectStreamClass;
  *
  * @author omercohen
  */
-public class MyObjectInputStream extends ObjectInputStream 
+public class CustomLoaderObjectInputStream extends ObjectInputStream 
 {
     
     ClassLoader loader;
     
-    public MyObjectInputStream(InputStream in, ClassLoader loader) throws IOException
+    public CustomLoaderObjectInputStream(InputStream in, ClassLoader loader) throws IOException
     {
         super(in);
         this.loader = loader;

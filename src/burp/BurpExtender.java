@@ -3,6 +3,7 @@ package burp;
 import com.thoughtworks.xstream.XStream;
 import com.thoughtworks.xstream.io.xml.DomDriver;
 import java.awt.Component;
+import java.awt.event.ActionEvent;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -19,6 +20,8 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.swing.AbstractAction;
+import javax.swing.Action;
 import javax.swing.JMenuItem;
 
 public class BurpExtender implements IBurpExtender, IMessageEditorTabFactory, IContextMenuFactory {
@@ -51,6 +54,7 @@ public class BurpExtender implements IBurpExtender, IMessageEditorTabFactory, IC
 
         // register ourselves as a message editor tab factory
         callbacks.registerMessageEditorTabFactory(this);
+        callbacks.registerContextMenuFactory(this);
         
     }
 
@@ -69,8 +73,28 @@ public class BurpExtender implements IBurpExtender, IMessageEditorTabFactory, IC
     @Override
     public List<JMenuItem> createMenuItems(IContextMenuInvocation invocation) {
         List<JMenuItem> menu = new ArrayList<>();
-        menu.add(new JMenuItem("Exit"));
+        Action reloadJarsAction = new ReloadJarsAction("BurpJDSer-ng: Reload JARs", invocation);
+        JMenuItem reloadJars = new JMenuItem(reloadJarsAction);
+        
+        menu.add(reloadJars);
         return menu;
+    }
+    
+    class ReloadJarsAction extends AbstractAction {
+
+        IContextMenuInvocation invocation;
+        
+        public ReloadJarsAction(String text, IContextMenuInvocation invocation) {
+            super(text);
+            this.invocation = invocation;
+        }
+        
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            _stdout.println("Reloading jars from " + LIB_DIR);
+            refreshSharedClassLoader();
+        }
+        
     }
 
     //
@@ -123,7 +147,7 @@ public class BurpExtender implements IBurpExtender, IMessageEditorTabFactory, IC
                 txtInput.setText(null);
                 txtInput.setEditable(false);
             } else {
-                MyObjectInputStream is = null;
+                CustomLoaderObjectInputStream is = null;
                 try {
 
                     // save offsets
@@ -141,7 +165,7 @@ public class BurpExtender implements IBurpExtender, IMessageEditorTabFactory, IC
 
                     // Use a custom OIS that uses our own ClassLoader
                     
-                    is = new MyObjectInputStream(bais, getSharedClassLoader());
+                    is = new CustomLoaderObjectInputStream(bais, getSharedClassLoader());
                     obj = is.readObject();
                     String xml = xstream.toXML(obj);
 
