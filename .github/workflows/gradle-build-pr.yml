@@ -12,14 +12,11 @@ jobs:
     - uses: actions/setup-java@v1
       with:
         java-version: 11
+
     - uses: eskatos/gradle-command-action@v1
       with:
-        arguments: build --scan
+        arguments: build fatJar --scan
     - uses: actions/upload-artifact@v2
       with:
-        name: BurpJDSer-ng.jar
-        path: build/libs/BurpJDSer-ng.jar
-    - uses: actions/upload-artifact@v2
-      with:
-        name: BurpJDSer-ng-all.jar
-        path: build/libs/BurpJDSer-ng-all.jar
+        name: ${{ matrix.os }}
+        path: build/libs/
