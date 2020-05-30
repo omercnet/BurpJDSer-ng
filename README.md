@@ -1,13 +1,13 @@
-#BurpJDSer-ng
+# BurpJDSer-ng
 
 
-A Burp Extender plugin, that will deserialized java objects and encode them in XML using the [Xtream](http://xstream.codehaus.org/) library.
+A Burp Extender plugin, that will deserialized java objects and encode them in XML using the [Xtream](https://x-stream.github.io/) library.
 
 Based in part on [khai-tran](https://github.com/khai-tran/BurpJDSer)'s work but written from scratch to work with the new Extender API introduced in Burp-1.5.01
 
-##Usage
+## Usage
 
-###1) Find and download client *.jar files
+### 1) Find and download client *.jar files
 Few methods to locate the required jar files containing the classes we'll be deserializing.
 * In case of a .jnlp file use [jnpdownloader](https://code.google.com/p/jnlpdownloader/)
 * Locating jars in browser cache
@@ -15,11 +15,11 @@ Few methods to locate the required jar files containing the classes we'll be des
 
 Finally, create a "libs/" directory next to your burp.jar and put all the jars in it.
 
-###2) Start Burp plugin
-Download from [here](https://github.com/IOActive/BurpJDSer-ng/raw/master/dist/BurpJDSer-ng.jar) and simply load it in the Extender tab, the Output window will list all the loaded jars from ./libs/ 
+### 2) Start Burp plugin
+Download from [here](https://github.com/omercnet/BurpJDSer-ng/raw/master/dist/BurpJDSer-ng.jar) and simply load it in the Extender tab, the Output window will list all the loaded jars from ./libs/ 
 
 
-###3) Inspect serialized Java traffic
+### 3) Inspect serialized Java traffic
 Serialized Java content will automagically appear in the Deserialized Java input tab in appropriate locations (proxy history, interceptor, repeater, etc.)
 Any changes made to the XML will serialize back once you switch to a different tab or send the request.
 

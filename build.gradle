@@ -1,0 +1,32 @@
+plugins {
+    id 'java-library'
+    id 'org.nosphere.gradle.github.actions' version '1.1.0'
+    id 'com.github.johnrengelman.shadow' version '5.2.0'
+    
+}
+
+group = 'net.omerc'
+version = '0.3.5'
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    // https://mvnrepository.com/artifact/com.thoughtworks.xstream/xstream
+    api group: 'com.thoughtworks.xstream', name: 'xstream', version: '1.4.12'
+
+    // https://mvnrepository.com/artifact/org.codehaus.jettison/jettison
+    api group: 'org.codehaus.jettison', name: 'jettison', version: '1.4.1'
+
+    // https://mvnrepository.com/artifact/net.portswigger.burp.extender/burp-extender-api
+    compileOnly group: 'net.portswigger.burp.extender', name: 'burp-extender-api', version: '2.1'
+}
+
+sourceSets {
+    main {
+        java {
+            srcDir 'src'
+        }
+    }
+}
