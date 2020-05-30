@@ -1,5 +1,5 @@
 name: Run Gradle on PRs
-on: pull_request
+on: push
 jobs:
   gradle:
     strategy:
@@ -19,5 +19,5 @@ jobs:
           arguments: build shadow --scan
       - uses: actions/upload-artifact@v2
         with:
-          name: '${{ matrix.os }}'
-          path: build/libs/*.jar
+          name: 'BurpJDSer-ng-${{ github.sha }}.jar'
+          path: 'build/libs/*-all.jar'
