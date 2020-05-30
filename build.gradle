@@ -2,11 +2,10 @@ plugins {
     id 'java-library'
     id 'org.nosphere.gradle.github.actions' version '1.1.0'
     id 'com.github.johnrengelman.shadow' version '5.2.0'
-    
+    id 'org.ajoberstar.reckon' version '0.12.0'
 }
 
-group = 'net.omerc'
-version = '0.3.5'
+group = 'omercnet'
 
 repositories {
     mavenCentral()
@@ -29,4 +28,11 @@ sourceSets {
             srcDir 'src'
         }
     }
+}
+
+reckonTagCreate.dependsOn check
+
+reckon {
+    scopeFromProp()
+    stageFromProp('alpha', 'rc', 'final')
 }
