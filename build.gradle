@@ -36,3 +36,6 @@ reckon {
     scopeFromProp()
     stageFromProp('alpha', 'rc', 'final')
 }
+
+jar.archiveAppendix = 'java'+JavaVersion.current().toString()
+shadowJar.archiveAppendix = jar.archiveAppendix
