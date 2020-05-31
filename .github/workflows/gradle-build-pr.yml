@@ -16,7 +16,7 @@ jobs:
           java-version: ${{ matrix.java }}
       - uses: eskatos/gradle-command-action@v1
         with:
-          arguments: build shadow --scan
+          arguments: build shadowJar --scan
       - uses: actions/upload-artifact@v2
         with:
           name: BurpJDSer-ng (Java ${{ matrix.java }})
