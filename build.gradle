@@ -13,7 +13,7 @@ repositories {
 
 dependencies {
     // https://mvnrepository.com/artifact/com.thoughtworks.xstream/xstream
-    api group: 'com.thoughtworks.xstream', name: 'xstream', version: '1.4.12'
+    api group: 'com.thoughtworks.xstream', name: 'xstream', version: '1.4.19'
 
     // https://mvnrepository.com/artifact/org.codehaus.jettison/jettison
     api group: 'org.codehaus.jettison', name: 'jettison', version: '1.4.1'
