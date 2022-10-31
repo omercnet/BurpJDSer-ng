@@ -5,7 +5,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        java: [ 8, 11 ]
+        java: [8, 11, 16, 17]
     name: Build with Java ${{ matrix.java }}
     steps:
       - uses: actions/checkout@v3
@@ -14,6 +14,8 @@ jobs:
       - uses: actions/setup-java@v3
         with:
           java-version: ${{ matrix.java }}
+          distribution: temurin
+
       - uses: eskatos/gradle-command-action@v2
         with:
           arguments: build shadowJar --scan
