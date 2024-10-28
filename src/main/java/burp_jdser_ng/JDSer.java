@@ -5,6 +5,8 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.ObjectOutputStream;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.Enumeration;
@@ -19,27 +21,30 @@ import burp.api.montoya.core.ByteArray;
 
 public class JDSer implements BurpExtension {
 
-    private MontoyaApi api;
-    private URLTableComponent urls;
-    public ClassLoader customClassLoader;
-    private final byte[] serializeMagic = new byte[]{-84, -19};
+    URLTableComponent uiComponent;
+    final byte[] serializeMagic = new byte[] { -84, -19 };
+
+    MontoyaApi api;
+
+    public URLClassLoader customClassLoader = new URLClassLoader(new URL[] {});
 
     private XStream xstream;
 
     @Override
     public void initialize(MontoyaApi api) {
+        api.logging().logToOutput("[+] Loading JDSer-NG...");
         this.api = api;
-        this.urls = new URLTableComponent(api);
+        this.uiComponent = new URLTableComponent(api);
         this.xstream = new XStream();
 
-        refreshSharedClassLoader();
         api.extension().setName("BurpJDSer-NG");
-
         api.userInterface().registerHttpRequestEditorProvider(new JDSerRequestEditorProvider(api, this));
         api.userInterface().registerHttpResponseEditorProvider(new JDSerResponseEditorProvider(api, this));
-        api.userInterface().registerSuiteTab("JDSer", urls);
+        api.userInterface().registerSuiteTab("JDSer", uiComponent);
 
-        this.urls.reloadButton.addActionListener(l -> refreshSharedClassLoader());
+        this.uiComponent.reloadButton.addActionListener(l -> refreshSharedClassLoader());
+        refreshSharedClassLoader();
+        api.logging().logToOutput("[+] JDSer-NG loaded.");
     }
 
     public boolean isSerialized(byte[] data) {
@@ -47,22 +52,24 @@ public class JDSer implements BurpExtension {
     }
 
     public void refreshSharedClassLoader() {
-        urls.clearDiscoveredClassesLog();
-        URL[] urlArray = urls.getURLs();
-        customClassLoader = new URLClassLoader(urlArray);
-        this.xstream.setClassLoader(customClassLoader);
+        uiComponent.clearDiscoveredClassesLog();
+        try {
+            uiComponent.clearDiscoveredClassesLog();
+            URL[] urlArray = uiComponent.getURLs();
+            customClassLoader.close();
+            customClassLoader = new URLClassLoader(urlArray);
+            xstream.setClassLoader(customClassLoader);
 
-        for (URL url : urlArray) {
-            // Get the directory or jar file that the URL points to
-            File file = new File(url.getFile());
-
-            // If the file is a directory, iterate over its contents
-            if (file.getName().endsWith(".jar")) {
-                findClassesInJar(file, customClassLoader);
-            } else {
-                this.urls.addErrorLog(file + " is not a recognized file type");
+            for (URL url : urlArray) {
+                findClassesInJar(url.toString(), customClassLoader);
             }
+        } catch (IOException | URISyntaxException ex) {
+            uiComponent.addErrorLog("Error refreshing class loader: " + ex);
         }
+    }
+
+    private void findClassesInJar(String jarPath, ClassLoader classLoader) throws URISyntaxException {
+        findClassesInJar(new File(new URI(jarPath)), classLoader);
     }
 
     private void findClassesInJar(File jarFile, ClassLoader classLoader) {
@@ -75,41 +82,44 @@ public class JDSer implements BurpExtension {
                     className = className.replace('/', '.');
                     try {
                         Class<?> clazz = classLoader.loadClass(className);
-                        urls.addDiscoveredClassLog(clazz.getName());
-                        xstream.allowTypes(new Class[]{clazz});
+                        uiComponent.addDiscoveredClassLog(clazz.getName());
+                        xstream.allowTypes(new Class[] { clazz });
                     } catch (ClassNotFoundException e) {
-                        urls.addErrorLog("Error loading class from jar (" + jarFile + "): " + e);
+                        String errorMsg = "Error loading class from jar (" + jarFile + "): " + e;
+                        api.logging().logToError(errorMsg);
+                        uiComponent.addErrorLog(errorMsg);
                     }
                 }
             }
         } catch (IOException e) {
-            urls.addErrorLog("Error loading class from jar (" + jarFile + "): " + e);
+            uiComponent.addErrorLog("Error loading class from jar (" + jarFile + "): " + e);
         }
     }
 
     public ByteArray ByteArrayToXML(byte[] data, ClassLoader classloader) {
 
-        try (ByteArrayInputStream bais = new ByteArrayInputStream(data); CustomLoaderObjectInputStream ois = new CustomLoaderObjectInputStream(bais, classloader)) {
+        try (ByteArrayInputStream bais = new ByteArrayInputStream(data);
+                CustomLoaderObjectInputStream ois = new CustomLoaderObjectInputStream(bais, classloader)) {
             Object obj = ois.readObject();
-            urls.addDiscoveredClassLog(obj.getClass().getName());
             return ByteArray.byteArray(xstream.toXML(obj).getBytes());
         } catch (IOException | ClassNotFoundException e) {
             String errorMsg = "Failed to serialize data:" + e;
-            urls.addErrorLog(errorMsg);
+            uiComponent.addErrorLog(errorMsg);
             return ByteArray.byteArray(errorMsg.getBytes());
         }
     }
 
     public ByteArray XMLToByteArray(String data) {
         Object obj = xstream.fromXML(data);
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        try (ObjectOutputStream oos = new ObjectOutputStream(baos)) {
+
+        try (ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                ObjectOutputStream oos = new ObjectOutputStream(baos)) {
             oos.writeObject(obj);
             oos.flush();
             return ByteArray.byteArray(baos.toByteArray());
         } catch (IOException e) {
             String errorMsg = "Failed to deserialize data:" + e;
-            urls.addErrorLog(errorMsg);
+            uiComponent.addErrorLog(errorMsg);
             return ByteArray.byteArray(errorMsg.getBytes());
         }
     }

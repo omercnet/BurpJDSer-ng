@@ -9,7 +9,6 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
 
 import javax.swing.JButton;
@@ -26,7 +25,7 @@ import burp.api.montoya.MontoyaApi;
 public class URLTableComponent extends JPanel {
 
     private final MontoyaApi api;
-    private final List<URL> urlList = new ArrayList<>();
+    private final ArrayList<URL> jarList = new ArrayList<>();
 
     private final JTable classPathTable;
     private final DefaultTableModel classPathTableModel;
@@ -36,32 +35,30 @@ public class URLTableComponent extends JPanel {
 
     public final JButton reloadButton = new JButton("Reload");
 
+    private final String perfName = "jdser:paths";
+
     public URLTableComponent(MontoyaApi api) {
         this.api = api;
         setLayout(new BorderLayout());
 
-        classPathTableModel = new DefaultTableModel(new Object[]{"Class Path"}, 0);
+        classPathTableModel = new DefaultTableModel(new Object[] { "Class Path" }, 0);
         classPathTable = new JTable(classPathTableModel);
         JPanel classPathPanel = createPanelWithTable(classPathTable, Map.of("Add", e -> addFile(),
                 "Remove", e -> removeSelectedFile(),
                 "Clear", e -> clearFiles(),
-                "Reload", e -> reloadButton.doClick()
-        ));
+                "Reload", e -> reloadButton.doClick()));
 
-        discoveredClassesLogTableModel = new DefaultTableModel(new Object[]{"Discovered Classes"}, 0);
+        discoveredClassesLogTableModel = new DefaultTableModel(new Object[] { "Discovered Classes" }, 0);
         JPanel discoveredClassesPanel = createPanelWithTable(new JTable(discoveredClassesLogTableModel), Map.of(
-                "Clear", e -> clearTable(discoveredClassesLogTableModel)
-        ));
+                "Clear", e -> clearTable(discoveredClassesLogTableModel)));
 
-        outputLogTableModel = new DefaultTableModel(new Object[]{"Output Log"}, 0);
+        outputLogTableModel = new DefaultTableModel(new Object[] { "Output Log" }, 0);
         JPanel outputLogPanel = createPanelWithTable(new JTable(outputLogTableModel), Map.of(
-                "Clear", e -> clearTable(outputLogTableModel)
-        ));
+                "Clear", e -> clearTable(outputLogTableModel)));
 
-        errorLogTableModel = new DefaultTableModel(new Object[]{"Error Log"}, 0);
+        errorLogTableModel = new DefaultTableModel(new Object[] { "Error Log" }, 0);
         JPanel errorLogPanel = createPanelWithTable(new JTable(errorLogTableModel), Map.of(
-                "Clear", e -> clearTable(errorLogTableModel)
-        ));
+                "Clear", e -> clearTable(errorLogTableModel)));
 
         JPanel mainPanel = new JPanel(new GridLayout(2, 2));
         mainPanel.add(classPathPanel);
@@ -70,11 +67,11 @@ public class URLTableComponent extends JPanel {
         mainPanel.add(errorLogPanel);
         add(mainPanel, BorderLayout.CENTER);
 
-        loadFiles();
+        loadPerfs();
     }
 
     public void addDiscoveredClassLog(String log) {
-        SwingUtilities.invokeLater(() -> discoveredClassesLogTableModel.addRow(new Object[]{log}));
+        SwingUtilities.invokeLater(() -> discoveredClassesLogTableModel.addRow(new Object[] { log }));
     }
 
     public void clearDiscoveredClassesLog() {
@@ -82,25 +79,23 @@ public class URLTableComponent extends JPanel {
     }
 
     public void addOutputLog(String log) {
-        SwingUtilities.invokeLater(() -> outputLogTableModel.addRow(new Object[]{log}));
+        SwingUtilities.invokeLater(() -> outputLogTableModel.addRow(new Object[] { log }));
     }
 
     public void addErrorLog(String log) {
-        SwingUtilities.invokeLater(() -> errorLogTableModel.addRow(new Object[]{log}));
+        SwingUtilities.invokeLater(() -> errorLogTableModel.addRow(new Object[] { log }));
     }
 
-    private void loadFiles() {
-        String urls = api.persistence().preferences().getString("jdser:urls");
-        if (urls == null) {
-            return;
-        }
-        if (!urls.isEmpty()) {
+    private void loadPerfs() {
+        String urls = api.persistence().preferences().getString(perfName);
+        if (urls != null && !urls.isEmpty()) {
             for (String urlString : urls.split(";")) {
+                api.logging().logToOutput("Loading path: " + urlString);
                 try {
-                    URL url = new URI(urlString).toURL();
-                    urlList.add(url);
-                    classPathTableModel.addRow(new Object[]{url});
-                } catch (MalformedURLException | URISyntaxException e) {
+                    URL jarPath = new URI(urlString).toURL();
+                    jarList.add(jarPath);
+                    classPathTableModel.addRow(new Object[] { jarPath });
+                } catch (URISyntaxException | MalformedURLException e) {
                     JOptionPane.showMessageDialog(this, "Error loading URL: " + e.getMessage());
                 }
             }
@@ -122,31 +117,34 @@ public class URLTableComponent extends JPanel {
         });
 
         if (fileChooser.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
-            File selectedFile = fileChooser.getSelectedFile();
             try {
-                URL url = selectedFile.toURI().toURL();
-                urlList.add(url);
-                classPathTableModel.addRow(new Object[]{url});
+                File selectedFile = fileChooser.getSelectedFile();
+                URL jarPath;
+                jarPath = selectedFile.toURI().toURL();
+                jarList.add(jarPath);
+                classPathTableModel.addRow(new Object[] { jarPath });
+                persist();
             } catch (MalformedURLException ex) {
-                JOptionPane.showMessageDialog(this, "Error adding URL: " + ex.getMessage());
+                JOptionPane.showMessageDialog(this, "Error loading URL: " + ex.getMessage());
             }
-            saveURLs();
+            persist();
         }
+
     }
 
     private void removeSelectedFile() {
         int selectedRow = classPathTable.getSelectedRow();
         if (selectedRow != -1) {
             classPathTableModel.removeRow(selectedRow);
-            urlList.remove(selectedRow);
-            saveURLs();
+            jarList.remove(selectedRow);
+            persist();
         }
     }
 
     private void clearFiles() {
         classPathTableModel.setRowCount(0);
-        urlList.clear();
-        saveURLs();
+        jarList.clear();
+        persist();
     }
 
     private void clearTable(DefaultTableModel model) {
@@ -154,16 +152,17 @@ public class URLTableComponent extends JPanel {
     }
 
     public URL[] getURLs() {
-        return urlList.toArray(URL[]::new);
+        return jarList.toArray(URL[]::new);
     }
 
-    private void saveURLs() {
-        StringBuilder urls = new StringBuilder(urlList.size() * 50); // Estimate size
-        for (URL url : urlList) {
-            urls.append(url).append(";");
+    private void persist() {
+        StringBuilder urls = new StringBuilder();
+        for (URL url : jarList) {
+            urls.append(url.toString()).append(";");
         }
-        api.logging().logToOutput("Saving URLs: " + urls);
-        api.persistence().preferences().setString("jdser:urls", urls.toString());
+        api.logging().logToOutput("Saving paths: " + urls);
+        api.persistence().preferences().setString(perfName, urls.toString());
+        reloadButton.doClick();
     }
 
     private JPanel createPanelWithTable(JTable table, Map<String, java.util.function.Consumer<ActionEvent>> buttons) {

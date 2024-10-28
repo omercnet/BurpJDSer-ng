@@ -3,7 +3,7 @@ plugins {
 }
 
 group = 'net.omerc'
-version = '0.3.5'
+version = '0.9.0'
 
 repositories {
     mavenLocal()
@@ -11,7 +11,7 @@ repositories {
 }
 
 dependencies {
-    implementation 'net.portswigger.burp.extensions:montoya-api:+'
+    implementation 'net.portswigger.burp.extensions:montoya-api:2024.7'
     implementation 'com.thoughtworks.xstream:xstream:1.4.20'
 }
 
@@ -23,15 +23,23 @@ sourceSets {
     }
 }
 
+task exampleJar(type: Jar) {
+    archiveClassifier.set("example-java" + JavaVersion.current().majorVersion)
+    from sourceSets.example.output
+}
+
+
 task runExample(type: JavaExec) {
+    dependsOn exampleJar
     classpath = sourceSets.example.runtimeClasspath
     mainClass = 'example.Client'
 }
+
 
 
 jar {
     from {
         configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) }
     }
-    archiveFileName = "${archiveBaseName.get()}-${archiveVersion.get()}-java${JavaVersion.current().majorVersion}.jar"
+    archiveClassifier.set("java" + JavaVersion.current().majorVersion)
 }
