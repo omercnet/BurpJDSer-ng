@@ -1,4 +1,4 @@
-package burp;
+package burp_jdser_ng;
 
 import java.io.IOException;
 import java.io.InputStream;
