@@ -1,0 +1,41 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+permissions:
+  pull-requests: write
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    name: Build
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          java-version-file: .java-version
+          distribution: temurin
+          cache: gradle
+
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          build-scan-publish: true
+          build-scan-terms-of-use-url: "https://gradle.com/terms-of-service"
+          build-scan-terms-of-use-agree: "yes"          
+
+      - name: Gradle Build
+        run: ./gradlew build --scan
+      - uses: actions/upload-artifact@v4
+        with:
+          name: BurpJDSer-ng
+          path: build/libs/*.jar
+      - name: Release
+        uses: softprops/action-gh-release@v2
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          files: build/libs/*.jar
