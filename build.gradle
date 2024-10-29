@@ -1,9 +1,26 @@
 plugins {
     id 'java'
+    id 'me.qoomon.git-versioning' version '6.4.4'
 }
 
 group = 'net.omerc'
-version = '0.9.0'
+version = '0.0.0-SNAPSHOT'
+gitVersioning.apply {
+    refs {
+        branch('.+') {
+            version = '${ref}-SNAPSHOT'
+        }
+        tag('v(?<version>.*)') {
+            version = '${ref.version}'
+        }
+    }
+
+    // optional fallback configuration in case of no matching ref configuration
+    rev {
+        version = '${commit.short}'
+    }  
+}
+
 
 repositories {
     mavenLocal()
@@ -24,7 +41,6 @@ sourceSets {
 }
 
 task exampleJar(type: Jar) {
-    archiveClassifier.set("example-java" + JavaVersion.current().majorVersion)
     from sourceSets.example.output
 }
 
@@ -41,5 +57,5 @@ jar {
     from {
         configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) }
     }
-    archiveClassifier.set("java" + JavaVersion.current().majorVersion)
 }
+

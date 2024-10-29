@@ -1,10 +1,14 @@
 name: CI
 
 on:
+  push:
+    branches:
+      - main
   pull_request:
 
 permissions:
   pull-requests: write
+  contents: write
 
 jobs:
   build:
@@ -30,3 +34,8 @@ jobs:
         with:
           name: BurpJDSer-ng
           path: build/libs/*.jar
+      - name: Release
+        uses: softprops/action-gh-release@v2
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          files: build/libs/*.jar
