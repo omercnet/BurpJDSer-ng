@@ -1,27 +1,23 @@
 # BurpJDSer-ng
 
+A Burp Extender plugin that deserializes Java objects and encodes them in XML using the [XStream](https://x-stream.github.io/) library.
 
-A Burp Extender plugin, that will deserialized java objects and encode them in JSON using the [Xtream](https://x-stream.github.io/) library.
-
-Based in part on [khai-tran](https://github.com/khai-tran/BurpJDSer)'s work but written from scratch to work with the new Extender API introduced in Burp-1.5.01
+Based in part on [khai-tran](https://github.com/khai-tran/BurpJDSer)'s work but written from scratch to work with the new Montoya API.
 
 ## Usage
 
-### 1) Find and download client *.jar files
-Few methods to locate the required jar files containing the classes we'll be deserializing.
-* In case of a .jnlp file use [jnpdownloader](https://code.google.com/p/jnlpdownloader/)
-* Locating jars in browser cache
-* Looking for .jar in burp proxy history
+### 1. Find and Download Client JAR Files
+There are a few methods to locate the required JAR files containing the classes to be deserialized:
+- If you have a `.jnlp` file, use [jnpdownloader](https://code.google.com/p/jnlpdownloader/).
+- Locate JAR files in the browser cache.
+- Look for JAR files in Burp proxy history.
 
-Finally, create a "libs/" directory next to your burp.jar and put all the jars in it.
+### 2. Start Burp Plugin
+Download the plugin from the [releases page](https://github.com/omercnet/BurpJDSer-ng/releases) and load it in the Extensions tab in Burp.
 
-### 2) Start Burp plugin
-Download from [releases page](https://github.com/omercnet/BurpJDSer-ng/releases) and load it in the Extender tab, the Output window will list all the loaded jars from ./libs/ 
+Use the `JDSer` tab to load the JAR files containing the classes you want to deserialize.
 
-### 3) Inspect serialized Java traffic
-Serialized Java content will automagically appear in the `Java Object` tab in appropriate locations (proxy history, interceptor, repeater, etc.)
-Any changes made to the JSON will serialize back once you switch to a different tab or send the request.
+### 3. Inspect Serialized Java Traffic
+Serialized Java content will automatically appear in the `Java Object` tab in appropriate locations (proxy history, interceptor, repeater, etc.). Any changes made to the XML will serialize back once you switch to a different tab or send the request.
 
-**Please note that if you mess up the JSON schema or edit an object in a funny way, the re-serialization will fail and the error will be displayed in the Dashboard tab**
-
-In case you need to add more JARs, right click anywhere and select "BurpJDSer-ng: Reload JARs"
+If you get an error that a class was not found, you can add the JAR file containing that class in the `JDSer` tab and try again.
