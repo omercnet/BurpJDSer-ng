@@ -28,7 +28,7 @@ repositories {
 }
 
 dependencies {
-    implementation 'net.portswigger.burp.extensions:montoya-api:2024.11'
+    implementation 'net.portswigger.burp.extensions:montoya-api:2024.12'
     implementation 'com.thoughtworks.xstream:xstream:1.4.21'
 }
 
