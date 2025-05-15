@@ -1,6 +1,12 @@
 plugins {
-    id 'java'
+    id 'java-library'
     id 'me.qoomon.git-versioning' version '6.4.4'
+}
+
+java {
+    toolchain {
+      languageVersion.set(JavaLanguageVersion.of(file(".java-version").text.trim()))
+    }
 }
 
 group = 'net.omerc'
@@ -42,16 +48,14 @@ sourceSets {
 
 task exampleJar(type: Jar) {
     from sourceSets.example.output
+    archiveBaseName	= 'example'
 }
-
 
 task runExample(type: JavaExec) {
     dependsOn exampleJar
     classpath = sourceSets.example.runtimeClasspath
     mainClass = 'example.Client'
 }
-
-
 
 jar {
     from {
