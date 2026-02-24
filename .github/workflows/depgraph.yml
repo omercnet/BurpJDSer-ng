@@ -20,4 +20,4 @@ jobs:
           distribution: temurin
           cache: gradle
       - name: Generate and submit dependency graph
-        uses: gradle/actions/dependency-submission@v4
+        uses: gradle/actions/dependency-submission@0723195856401067f7a2779048b490ace7a47d7c # v5
